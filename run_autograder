@@ -64,6 +64,17 @@ def run_tests():
         suite = unittest.defaultTestLoader.discover(GRADER_DIR)
         JSONTestRunner(visibility='visible', stream=result_stream).run(suite)
 
+        result_stream.seek(0)  # reset file pointer
+        data = json.load(result_stream)  # load contents to JSON
+        final_score = data.get('score', 0.0)
+
+        data['score'] = data.get('leaderboard')[0]['value']
+
+        result_stream.truncate(0)
+        result_stream.seek(0)
+
+        json.dump(data, result_stream)  # rewrite JSON to file
+
 
 def main():
     config = load_yaml('config.yml')

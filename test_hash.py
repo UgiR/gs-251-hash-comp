@@ -4,7 +4,7 @@ import ctypes
 import logging
 from scipy.stats import chisquare
 import numpy as np
-from gradescope_utils.autograder_utils.decorators import leaderboard, partial_credit
+from gradescope_utils.autograder_utils.decorators import leaderboard
 
 
 class TestHash(unittest.TestCase):
@@ -79,7 +79,6 @@ class TestHash(unittest.TestCase):
         return result[1]
 
     @leaderboard('points')
-    @partial_credit(100_000)
     def test_score_hash(self, set_leaderboard_value=None, set_score=None):
         """Evaluate hash function"""
 
@@ -106,8 +105,7 @@ class TestHash(unittest.TestCase):
                 p = self.is_uniform(histo[0])
 
                 data_score = 50_000 * p
-                log.info(data_score)
+                log.info('{}: {}'.format(filename, data_score))
                 score += data_score
 
-        set_score(score)
         set_leaderboard_value(int(score))
