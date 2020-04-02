@@ -1,0 +1,90 @@
+#!/usr/bin/env python3
+
+import shutil
+import os
+from pathlib import Path
+
+import yaml
+import json
+import subprocess
+import unittest
+import logging
+
+from gradescope_utils.autograder_utils.json_test_runner import JSONTestRunner
+
+
+logging.basicConfig()
+LOGGER = logging.getLogger('autograder')
+LOGGER.setLevel(logging.INFO)
+
+SUBMITTED_DIR = '/autograder/submission'
+GRADER_DIR = '/autograder/source'
+RESULTS_FILE = '/autograder/results/results.json'
+
+
+def ZERO_RESULT(msg):
+    return {
+        'score': 0.0,
+        'stdout_visibility': 'hidden',
+        'output': msg,
+        'leaderboard': []
+    }
+
+
+def NOT_SUBMITTED(file):
+    return ZERO_RESULT('Required file not submitted: \'{0}\'.'.format(file))
+
+
+def load_yaml(file: str):
+    try:
+        with open(file, 'r') as f:
+            return yaml.safe_load(f) or {}
+    except FileNotFoundError:
+        return {}
+
+
+def file_exists(path: str) -> bool:
+    return Path(path).is_file()
+
+
+def is_submitted(*files: str) -> bool:
+    for file in files:
+        if not file_exists(os.path.join(SUBMITTED_DIR, file)):
+            return False
+    return True
+
+
+def write_result(**kwargs):
+    with open(SUBMITTED_DIR, 'w+') as result:
+        json.dump(kwargs, result)
+
+
+def run_tests():
+    with open(RESULTS_FILE, 'w+') as result_stream:
+        suite = unittest.defaultTestLoader.discover(GRADER_DIR)
+        JSONTestRunner(visibility='visible', stream=result_stream).run(suite)
+
+
+def main():
+    config = load_yaml('config.yml')
+
+    for file in config.get('required_files', []):
+        LOGGER.info('Attempting to load file: {}'.format(file))
+        #  check if required file is submitted
+        if not is_submitted(file):
+            LOGGER.info('File not submitted: {}'.format(file))
+            write_result(**NOT_SUBMITTED(file))
+            exit(0)
+        #  copy submitted file to shared test directory
+        LOGGER.info('Copying file to test directory: {}'.format(file))
+        shutil.copy(os.path.join(SUBMITTED_DIR, file), GRADER_DIR)
+
+    # prepare student hash
+    subprocess.call(['make', 'hash-so'], cwd='/autograder/source')
+
+    run_tests()
+
+
+#  Execution begins here
+if __name__ == '__main__':
+    main()
