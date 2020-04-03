@@ -2,6 +2,7 @@ import glob
 import unittest
 import ctypes
 import logging
+import math
 from scipy.stats import chisquare
 import numpy as np
 from gradescope_utils.autograder_utils.decorators import leaderboard
@@ -105,6 +106,9 @@ class TestHash(unittest.TestCase):
                 p = self.is_uniform(histo[0])
 
                 data_score = 50_000 * p
+                if math.isnan(data_score):
+                    data_score = 0
+
                 log.info('{}: {}'.format(filename, data_score))
                 score += data_score
 
