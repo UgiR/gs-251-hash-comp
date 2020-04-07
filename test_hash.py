@@ -17,6 +17,7 @@ class TestHash(unittest.TestCase):
         :return: None
         '''
         self.lib = ctypes.cdll.LoadLibrary('/autograder/source/hash.so')
+        self.lib.hash.restype = ctypes.c_ushort
         self.upper_bound = 2 ** 16 - 1  # max hash value, ret type of hash function will be unisgned short
         self.n_bins = 257  # number of bins. this divides nicely, leaving each bin responsible for 15 values
         self.bin_size = self.upper_bound / self.n_bins  # 65535 / 257 = 255
